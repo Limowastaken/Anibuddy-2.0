@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rankings - AnimeList</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    
+    <!-- Custom Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-bg: #1a1a2e;
+            --secondary-bg: #16213e;
+            --accent-purple: #4a3f8a;
+            --electric-blue: #00d4ff;
+            --soft-purple: #6b5b95;
+            --light-blue: #7ec8e3;
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8b8;
+            --text-muted: #666666;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .page-header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(74, 63, 138, 0.3);
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .page-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--electric-blue), var(--light-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            margin-bottom: 2rem;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-button {
+            flex-shrink: 0;
+            padding: 0.75rem 1.5rem;
+            background: rgba(74, 63, 138, 0.3);
+            border: 1px solid rgba(74, 63, 138, 0.5);
+            border-radius: 25px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover,
+        .tab-button.active {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            color: var(--primary-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: rgba(22, 33, 62, 0.8);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid rgba(74, 63, 138, 0.3);
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--electric-blue);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .chart {
+            width: 100%;
+            height: 400px;
+        }
+
+        /* Ranking List */
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            background: rgba(22, 33, 62, 0.8);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(74, 63, 138, 0.3);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ranking-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--electric-blue);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .rank-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--electric-blue);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .rank-image {
+            width: 60px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin: 0 1rem;
+            border: 2px solid var(--accent-purple);
+        }
+
+        .rank-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .rank-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+        }
+
+        .rank-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .rank-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--electric-blue);
+        }
+
+        .rank-type {
+            background: rgba(107, 91, 149, 0.3);
+            color: var(--light-blue);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Loading State */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(74, 63, 138, 0.3);
+            border-top: 3px solid var(--electric-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .error-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .retry-btn {
+            background: var(--electric-blue);
+            color: var(--primary-bg);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .chart {
+                height: 300px;
+            }
+
+            .chart-container {
+                padding: 1.5rem;
+            }
+
+            .ranking-item {
+                padding: 0.75rem;
+            }
+
+            .rank-image {
+                width: 50px;
+                height: 70px;
+                margin: 0 0.75rem;
+            }
+
+            .rank-number {
+                font-size: 1.25rem;
+                min-width: 40px;
+            }
+
+            .rank-title {
+                font-size: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem 0.5rem;
+            }
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(74, 63, 138, 0.3);
+            padding: 0.75rem 0;
+            z-index: 100;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: var(--electric-blue);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 0.25rem;
+        }
+
+        body {
+            padding-bottom: 80px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="page-header">
+        <h1 class="page-title">Anime Rankings</h1>
+        <p class="page-subtitle">Discover the highest-rated anime across different categories</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <button class="tab-button active" data-category="top">Top Anime</button>
+            <button class="tab-button" data-category="airing">Currently Airing</button>
+            <button class="tab-button" data-category="upcoming">Upcoming</button>
+            <button class="tab-button" data-category="tv">TV Series</button>
+            <button class="tab-button" data-category="movie">Movies</button>
+            <button class="tab-button" data-category="ova">OVA</button>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="chart-container">
+            <h2 class="chart-title" id="chartTitle">Top 10 Highest Rated Anime</h2>
+            <div class="chart" id="rankingChart"></div>
+        </div>
+
+        <!-- Ranking List -->
+        <div class="ranking-list" id="rankingList">
+            <!-- Ranking items will be populated by JavaScript -->
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" id="loadingState">
+            <div class="loading-spinner"></div>
+            <p>Loading rankings...</p>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-items">
+            <a href="index.html" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                Home
+            </a>
+            <a href="rankings.html" class="nav-item active">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                </svg>
+                Rankings
+            </a>
+            <a href="#" class="nav-item" onclick="alert('Favorites coming soon!')">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                Favorites
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        class RankingsPage {
+            constructor() {
+                this.currentCategory = 'top';
+                this.currentPage = 1;
+                this.isLoading = false;
+                this.rankingData = [];
+                this.chart = null;
+                
+                this.categoryTitles = {
+                    'top': 'Top 10 Highest Rated Anime',
+                    'airing': 'Top 10 Currently Airing Anime',
+                    'upcoming': 'Top 10 Upcoming Anime',
+                    'tv': 'Top 10 TV Series',
+                    'movie': 'Top 10 Anime Movies',
+                    'ova': 'Top 10 OVA'
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadRankings();
+                this.initChart();
+            }
+
+            setupEventListeners() {
+                // Category tab buttons
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const category = e.target.dataset.category;
+                        this.switchCategory(category);
+                    });
+                });
+
+                // Infinite scroll
+                window.addEventListener('scroll', this.throttle(() => {
+                    if (this.isNearBottom() && !this.isLoading) {
+                        this.loadMoreRankings();
+                    }
+                }, 200));
+            }
+
+            switchCategory(category) {
+                if (this.currentCategory === category) return;
+                
+                this.currentCategory = category;
+                this.currentPage = 1;
+                this.rankingData = [];
+                
+                // Update active tab
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-category="${category}"]`).classList.add('active');
+                
+                // Update chart title
+                document.getElementById('chartTitle').textContent = this.categoryTitles[category];
+                
+                this.loadRankings();
+            }
+
+            async loadRankings() {
+                if (this.isLoading) return;
+                
+                this.isLoading = true;
+                this.showLoading();
+                
+                try {
+                    let url = '';
+                    
+                    switch (this.currentCategory) {
+                        case 'top':
+                            url = `https://api.jikan.moe/v4/top/anime?page=${this.currentPage}&limit=25`;
+                            break;
+                        case 'airing':
+                            url = `https://api.jikan.moe/v4/seasons/now?page=${this.currentPage}&limit=25`;
+                            break;
+                        case 'upcoming':
+                            url = `https://api.jikan.moe/v4/seasons/upcoming?page=${this.currentPage}&limit=25`;
+                            break;
+                        case 'tv':
+                            url = `https://api.jikan.moe/v4/top/anime?type=tv&page=${this.currentPage}&limit=25`;
+                            break;
+                        case 'movie':
+                            url = `https://api.jikan.moe/v4/top/anime?type=movie&page=${this.currentPage}&limit=25`;
+                            break;
+                        case 'ova':
+                            url = `https://api.jikan.moe/v4/top/anime?type=ova&page=${this.currentPage}&limit=25`;
+                            break;
+                    }
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (data.data) {
+                        if (this.currentPage === 1) {
+                            this.rankingData = data.data;
+                            this.renderRankings();
+                            this.updateChart();
+                        } else {
+                            this.rankingData = [...this.rankingData, ...data.data];
+                            this.appendRankings(data.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading rankings:', error);
+                    this.showError();
+                } finally {
+                    this.isLoading = false;
+                    this.hideLoading();
+                }
+            }
+
+            renderRankings() {
+                const container = document.getElementById('rankingList');
+                container.innerHTML = this.rankingData.map((anime, index) => this.createRankingItem(anime, index + 1)).join('');
+                this.attachEventListeners();
+            }
+
+            appendRankings(newData) {
+                const container = document.getElementById('rankingList');
+                const startIndex = this.rankingData.length - newData.length + 1;
+                const newItems = newData.map((anime, index) => this.createRankingItem(anime, startIndex + index)).join('');
+                container.insertAdjacentHTML('beforeend', newItems);
+                this.attachEventListeners();
+            }
+
+            createRankingItem(anime, rank) {
+                const score = anime.score || 'N/A';
+                const type = anime.type || 'TV';
+                const year = anime.year || 'N/A';
+                
+                return `
+                    <div class="ranking-item" data-anime-id="${anime.mal_id}">
+                        <div class="rank-number">#${rank}</div>
+                        <img class="rank-image" 
+                             src="${anime.images?.jpg?.image_url || ''}" 
+                             alt="${anime.title}"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA2MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMWEyYTJlIi8+Cjx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNjY2NjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5ObyBJbWFnZTwvdGV4dD4KPC9zdmc+'">
+                        <div class="rank-info">
+                            <h3 class="rank-title">${anime.title}</h3>
+                            <div class="rank-meta">
+                                <span class="rank-score">${score}</span>
+                                <span>${year}</span>
+                                <span class="rank-type">${type}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                document.querySelectorAll('.ranking-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const animeId = e.currentTarget.dataset.animeId;
+                        window.location.href = `details.html?id=${animeId}`;
+                    });
+                });
+            }
+
+            initChart() {
+                const chartContainer = document.getElementById('rankingChart');
+                this.chart = echarts.init(chartContainer);
+                
+                // Set dark theme colors
+                this.chart.setOption({
+                    backgroundColor: 'transparent',
+                    textStyle: {
+                        color: '#ffffff'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(22, 33, 62, 0.9)',
+                        borderColor: '#4a3f8a',
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        axisLine: {
+                            lineStyle: {
+                                color: '#4a3f8a'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#b8b8b8',
+                            rotate: 45
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: {
+                            lineStyle: {
+                                color: '#4a3f8a'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#b8b8b8'
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: 'rgba(74, 63, 138, 0.2)'
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'bar',
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#00d4ff' },
+                                { offset: 1, color: '#4a3f8a' }
+                            ])
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: '#7ec8e3' },
+                                    { offset: 1, color: '#6b5b95' }
+                                ])
+                            }
+                        }
+                    }]
+                });
+            }
+
+            updateChart() {
+                if (!this.chart || !this.rankingData.length) return;
+
+                const top10 = this.rankingData.slice(0, 10);
+                const titles = top10.map(anime => 
+                    anime.title.length > 15 ? anime.title.substring(0, 15) + '...' : anime.title
+                );
+                const scores = top10.map(anime => anime.score || 0);
+
+                this.chart.setOption({
+                    xAxis: {
+                        data: titles
+                    },
+                    series: [{
+                        data: scores
+                    }]
+                });
+            }
+
+            async loadMoreRankings() {
+                this.currentPage++;
+                await this.loadRankings();
+            }
+
+            showLoading() {
+                document.getElementById('loadingState').style.display = 'flex';
+                document.getElementById('rankingList').style.display = 'none';
+            }
+
+            hideLoading() {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('rankingList').style.display = 'flex';
+            }
+
+            showError() {
+                document.getElementById('loadingState').innerHTML = `
+                    <div class="error-state">
+                        <h3>Failed to load rankings</h3>
+                        <p>Please try again later or check your internet connection.</p>
+                        <button class="retry-btn" onclick="location.reload()">Retry</button>
+                    </div>
+                `;
+            }
+
+            isNearBottom() {
+                return window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000;
+            }
+
+            throttle(func, limit) {
+                let inThrottle;
+                return function() {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                };
+            }
+        }
+
+        // Initialize rankings page
+        document.addEventListener('DOMContentLoaded', () => {
+            new RankingsPage();
+        });
+
+        // Handle window resize for chart
+        window.addEventListener('resize', () => {
+            if (window.rankingsPage && window.rankingsPage.chart) {
+                window.rankingsPage.chart.resize();
+            }
+        });
+    </script>
+</body>
+</html>
